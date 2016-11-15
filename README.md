@@ -19,3 +19,5 @@ Note:
 Chrome may be started with the following parameter to allow local file access:
 
     google-chrome --allow-file-access-from-files
+
+![Example topology](https://github.com/kalcher/infiniband_topology/blob/master/topo-examples/topo.PNG)
