@@ -11,7 +11,7 @@ var width  = svg.style('width').replace('px','');
 var height = svg.style('height').replace('px','');
 
 //Set up the colour scale
-var color = d3.scale.category20();
+var color = d3.scale.category10();
 
 //The scales for implementing zoom, every coordinate used for
 //drawing will have to go through these.
@@ -48,10 +48,15 @@ window.onresize = function(){
 
 //Set up the force layout
 var force = d3.layout.force()
-    .charge(-1000)
-    .linkDistance(50)
+    .charge(-2000)
+    .linkDistance(65)
     .size([width, height])
     .on("tick", updateCoordinates);
+
+force.linkStrength(function(link) {
+        if (link.linktype === 'regular')  return 0.9;
+        return 1;
+});
 
 //Make the nodes draggable
 var drag = force.drag()
@@ -74,7 +79,7 @@ var drag = force.drag()
 
 //Variables to hold the different components of our graph
 //we declare them here so they can be accessed from different functions
-var link, circle, text, node, mode;
+var link, circle, text, node, mode, linktext;
 
 //This will contain the currently selected node, used to display
 //connectivity
@@ -102,7 +107,7 @@ function updateCoordinates() {
         var dy = dst_y - src_y;
 
         //The radius is also dependant of the "rank" of the link
-        dr = Math.sqrt(dx*dx + dy*dy)*d.rank;
+        dr = 5*Math.sqrt(dx*dx + dy*dy)*d.rank;
 
         //And we alternate the "direction" of the curve for even and odd ranks
         //The direction can be altered by swapping the endpoints of the curve.
@@ -144,6 +149,13 @@ function updateCoordinates() {
         return yzoom(d.y);
     });
 
+    linktext.attr("x", function (d) {
+        return xzoom(d.dx);
+    })
+    .attr("y", function (d) {
+        return yzoom(d.dy);
+    });
+
 }
 
 var topofile = getParameterByName('topofile') || 'default topofile';
@@ -153,6 +165,7 @@ d3.json(topofile, function(error, topoData){
     // console.log(topofile);
     if(error){
         alert('Unable to load ' + topofile);
+	console.log(error);
         return;
     }
     //Each node has a unique GUID, we use it to index the nodes for
@@ -191,7 +204,7 @@ d3.json(topofile, function(error, topoData){
         //The rank on the link will symbolize what "nth" connection
         //between the same nodes this link is, this is used to visualize
         //many connections between the same two nodes in a visually pleasing way
-        link.rank = link.source.connections[link.target.guid];
+        link.rank = link.source.connections[link.target.guid]-1;
     }
     updateGraph({nodes:topoData.nodes,links:topoData.links});
 });
@@ -204,6 +217,34 @@ function updateNodeinfo(node) {
     info.select('#portcount').html(node.available_ports+' ('+node.connected_ports+')');
     info.select('#connections').html(node.connected_nodes);
 }
+
+
+var contains = function(needle) {
+    // Per spec, the way to identify NaN is that it is not equal to itself
+    var findNaN = needle !== needle;
+    var indexOf;
+
+    if(!findNaN && typeof Array.prototype.indexOf === 'function') {
+        indexOf = Array.prototype.indexOf;
+    } else {
+        indexOf = function(needle) {
+            var i = -1, index = -1;
+
+            for(i = 0; i < this.length; i++) {
+                var item = this[i];
+
+                if((findNaN && item !== item) || item === needle) {
+                    index = i;
+                    break;
+                }
+            }
+
+            return index;
+        };
+    }
+
+    return indexOf.call(this, needle) > -1;
+};
 
 //This function highlights all the nodes and links
 //directly connected to the node with the guid given as argument
@@ -221,12 +262,16 @@ function selectNodes(curnode){
     });
     link.classed({
         'faded': function(d){
-            return !(d.source.guid == curnode.guid || 
-                    d.target.guid == curnode.guid);
+	    // check whether link is part of a route to lid
+	    return !contains.call(d.DLIDS, curnode.lid);
+ //           return !(d.source.guid == curnode.guid || 
+ //                   d.target.guid == curnode.guid);
         },
-        'highlight': function(d){
-            return d.source.guid == curnode.guid || 
-                    d.target.guid == curnode.guid;
+        'linkhl': function(d){
+	    return contains.call(d.DLIDS, curnode.lid);
+
+            //return d.source.guid == curnode.guid || 
+            //        d.target.guid == curnode.guid;
         }
     });
 }
@@ -237,7 +282,7 @@ function unselectNodes(){
     node.classed('faded',false);
     node.classed('highlight',false);
     link.classed('faded',false);
-    link.classed('highlight',false);
+    link.classed('linkhl',false);
     d3.select('#infoview').classed('hidden',true);
 }
 //This function takes care of drawing the graph once the data has been
@@ -249,11 +294,47 @@ function updateGraph(graph){
         .start();
 
     //Create all the line svgs but without locations yet
-    link = svg.selectAll(".link")
+    link = svg.append("g").selectAll(".link")
         .data(graph.links)
-      .enter().append("path")
+	.enter().append("path")
+	.attr("id",function(d,i) { return "linkId_" + i; })
         .attr("class", "link");
 
+    linktext = svg.append("g").selectAll("g.linklabelholder").data(graph.links);
+
+    linktext.enter().append("g").attr("class", "linklabelholder")
+     .append("text")
+     .attr("class", "linklabel")
+	 .style("font-size", "10px")
+     .attr("x", "170")
+	 .attr("y", "50")
+     .attr("text-anchor", "start")
+	   .style("fill","#000")
+	 .append("textPath")
+	.attr('startOffset', '8%')
+    .attr("xlink:href",function(d,i) { return "#linkId_" + i;})
+     .text(function(d) { 
+	 return d.DLIDS; 
+	 });
+
+/*
+    linktext = svg.selectAll(".link")
+    .data(graph.links)
+    .enter().append("text")
+    .attr("class","linktext")
+    .attr("dx",20)
+    .attr("dy",0)
+    .style("fill","red")
+    .append("textPath")
+    .attr("xlink:href",function(d,i) { return "#linkId_" + i;})
+    .text(function(d,i) { return "text for link " + i;});
+*/
+//    .text(function(d,i) { return "gra" + i; });
+
+//    linktext = link.append('text')
+//             .text(function(d) {console.log(d.DLIDS); return "8";})
+//             .attr('class', 'nodename')
+//             .attr('dx', 8).attr('dy', ".20em");
 
     //A node is a g element containing a circle and some text
     node = svg.selectAll(".node")

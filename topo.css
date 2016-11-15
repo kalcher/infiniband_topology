@@ -9,14 +9,15 @@
 }
 
 .faded {
-    opacity: 0.2;
-    stroke-width: 0.2px;
+    opacity: 0.5;
+    stroke-width: 0.5px;
 }
 
 .highlight {
     font-weight: bold;
     stroke-width: 2px;
 }
+
 
 .link {
     stroke: #999;
@@ -27,6 +28,11 @@
 
 .hidden {
     display: none;
+}
+
+.linkhl{
+    stroke: #0F0;
+    stroke-width: 2px;
 }
 
 .nodename {
