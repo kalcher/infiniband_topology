@@ -1,0 +1,44 @@
+SX6036	switch1		
+	P1 ->	SX6036 switch2 P1
+	P2 ->	SX6036 switch3 P4
+	P3 ->	SX6036 switch4 P3
+	P4 ->	SX6036 switch5 P1
+	P10 ->	MT25408 H-1 P1
+	P11 ->	MT25408 H-6 P1
+	P12 ->	MT25408 H-7 P1
+	P13 ->	MT25408 H-8 P1
+	P14 ->	MT25408 H-9 P1
+	P15 ->	MT25408 H-10 P1
+	P16 ->	MT25408 H-11 P1
+
+
+
+SX6036	switch2
+	P1 ->	SX6036 switch1 P1
+	P2 ->	SX6036 switch3 P2
+	P3 ->	SX6036 switch5 P2
+	P4 ->	SX6036 switch4 P2
+	P10 ->	MT25408 H-2 P1
+
+
+SX6036	switch3		
+	P1 ->	SX6036 switch4 P1
+	P2 ->	SX6036 switch2 P2
+	P3 ->	SX6036 switch5 P3
+	P4 ->	SX6036 switch1 P2
+	P10 ->	MT25408 H-3 P1
+
+SX6036	switch4		
+	P1 ->	SX6036 switch3 P1
+	P2 ->	SX6036 switch2 P4
+	P3 ->	SX6036 switch1 P3
+	P4 ->	SX6036 switch5 P4
+	P10 ->	MT25408 H-4 P1
+
+SX6036	switch5		
+	P1 ->	SX6036 switch1 P4
+	P2 ->	SX6036 switch2 P3
+	P3 ->	SX6036 switch3 P3
+	P4 ->	SX6036 switch4 P4
+	P10 ->	MT25408 H-5 P1
+
