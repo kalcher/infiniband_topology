@@ -11,6 +11,11 @@ The parser:
 - outputs this info into a .json file
 
 The visualizer:
-- loads the .json file
+- loads the .json file (via the topofile URL parameter )
 - displays the fabric topology using d3.js force layout
 - allow you to interact with the visualization
+
+Note: 
+Chrome may be started with the following parameter to allow local file access:
+
+    google-chrome --allow-file-access-from-files
